@@ -1,5 +1,5 @@
 ### ΕΙΣΑΓΩΓΗ ΔΙΑΦΟΡΩΝ MODULE
-import tkinter
+import tkinter  
 import tkinter.ttk
 from tkinter import filedialog
 import sys
@@ -9,19 +9,37 @@ import numpy as np
 from openpyxl import Workbook
 from openpyxl import load_workbook
 from openpyxl.utils import get_column_letter
+from configparser import ConfigParser
+import os
 
 ###########################ΜΕΤΑΒΛΗΤΕΣ ΠΡΟΓΡΑΜΜΑΤΟΣ####################################################
-WILDCARD = 2 # ΔΗΛΩΝΕΙ ΠΟΣΑ ΜΑΤΣ ΠΡΕΠΕΙ ΝΑ ΠΑΙΞΕΙ Ο ΠΑΙΧΤΗΣ ΓΙΑ ΝΑ ΠΑΡΕΙ ΜΠΑΛΑΝΤΕΡ           
-MAX_CHALLENGES_OUT = 1 # ΔΗΛΩΝΕΙ ΠΟΣΕΣ ΠΡΟΚΛΗΣΕΙΣ ΜΠΟΡΕΙ ΝΑ ΣΤΕΙΛΕΙ ΕΝΑΣ ΠΑΙΚΤΗΣ           
-MAX_CHALLENGES_IN = 1 # ΔΗΛΩΝΕΙ ΠΟΣΕΣ ΠΡΟΚΛΗΣΕΙς ΜΠΟΡΕΙ ΝΑ ΔΕΧΤΕΙ ΕΝΑΣ ΠΑΙΚΤΗΣ
-MAX_ACTIVE_CHALLENGES = 1 # ΔΗΛΩΝΕΙ ΤΟΝ ΜΕΓΙΣΤΟ ΑΡΙΘΜΟ ΠΡΟΚΛΗΣΕΩΝ ΠΟΥ ΜΠΟΡΕΙ ΝΑ ΑΠΟΔΕΚΤΕΙ ΕΝΑΣ ΠΑΙΧΤΗΣ
-MAX_RANKING_CHALLENGE = 3 # ΔΗΛΩΝΕΙ ΤΗΝ ΜΕΓΙΣΤΗ ΑΠΟΣΤΑΣΗ(ΔΙΑΦΟΡΑ ΚΑΤΑΤΑΞΗΣ) ΠΟΥ ΠΡΕΠΕΙ ΝΑ ΕΧΟΥΝΕ ΟΙ ΠΑΙΚΤΕΣ ΓΙΑ ΝΑ ΣΤΕΙΛΟΥΝΕ ΠΡΟΚΛΗΣΗ
-POINT_SET_MATCH =3 # ΟΡΙΖΕΙ ΤΟΝ ΜΕΓΙΣΤΟ ΑΡΙΘΜΟ ΣΕΤ ΠΟΥ ΠΡΕΠΕΙ ΝΑ ΠΑΡΕΙ ΕΝΑΣ ΠΑΙΚΤΗΣ ΓΙΑ ΝΑ ΚΕΡΔΙΣΕΙ ΤΟ ΜΑΤΣ ΠΡΟΚΛΗΣΗΣ
+global WILDCARD  # ΔΗΛΩΝΕΙ ΠΟΣΑ ΜΑΤΣ ΠΡΕΠΕΙ ΝΑ ΠΑΙΞΕΙ Ο ΠΑΙΧΤΗΣ ΓΙΑ ΝΑ ΠΑΡΕΙ ΜΠΑΛΑΝΤΕΡ           
+global MAX_CHALLENGES_OUT # ΔΗΛΩΝΕΙ ΠΟΣΕΣ ΠΡΟΚΛΗΣΕΙΣ ΜΠΟΡΕΙ ΝΑ ΣΤΕΙΛΕΙ ΕΝΑΣ ΠΑΙΚΤΗΣ           
+global MAX_CHALLENGES_IN # ΔΗΛΩΝΕΙ ΠΟΣΕΣ ΠΡΟΚΛΗΣΕΙς ΜΠΟΡΕΙ ΝΑ ΔΕΧΤΕΙ ΕΝΑΣ ΠΑΙΚΤΗΣ
+global MAX_ACTIVE_CHALLENGES  # ΔΗΛΩΝΕΙ ΤΟΝ ΜΕΓΙΣΤΟ ΑΡΙΘΜΟ ΠΡΟΚΛΗΣΕΩΝ ΠΟΥ ΜΠΟΡΕΙ ΝΑ ΑΠΟΔΕΚΤΕΙ ΕΝΑΣ ΠΑΙΧΤΗΣ
+global MAX_RANKING_CHALLENGE  # ΔΗΛΩΝΕΙ ΤΗΝ ΜΕΓΙΣΤΗ ΑΠΟΣΤΑΣΗ(ΔΙΑΦΟΡΑ ΚΑΤΑΤΑΞΗΣ) ΠΟΥ ΠΡΕΠΕΙ ΝΑ ΕΧΟΥΝΕ ΟΙ ΠΑΙΚΤΕΣ ΓΙΑ ΝΑ ΣΤΕΙΛΟΥΝΕ ΠΡΟΚΛΗΣΗ
+global POINT_SET_MATCH # ΟΡΙΖΕΙ ΤΟΝ ΜΕΓΙΣΤΟ ΑΡΙΘΜΟ ΣΕΤ ΠΟΥ ΠΡΕΠΕΙ ΝΑ ΠΑΡΕΙ ΕΝΑΣ ΠΑΙΚΤΗΣ ΓΙΑ ΝΑ ΚΕΡΔΙΣΕΙ ΤΟ ΜΑΤΣ ΠΡΟΚΛΗΣΗΣ
 global filename_player_data # ΔΗΛΩΝΕΙ ΤΟ ΑΡΧΕΙΟ ΕXCEL ΠΟΥ ΣΩΖΟΝΤΑΙ ΤΑ ΣΤΟΙΧΕΙΑ ΤΩΝ ΠΑΙΚΤΩΝ
 global filename_out_ch # ΔΗΛΩΝΕΙ ΤΟ ΑΡΧΕΙΟ ΤΩΝ ΕΚΡΕΜΩΝ ΠΡΟΚΛΗΣΕΩΝ ΤΩΝ ΠΑΙΚΤΩΝ
 global filename_valid_ch  # ΔΗΛΩΝΕΙ ΤΟ ΑΡΧΕΙΟ ΤΩΝ ΑΠΟΔΕΚΤΩΝ(ΕΝΕΡΓΩΝ) ΠΡΟΚΛΗΣΕΩΝ ΤΩΝ ΠΑΙΚΤΩΝ
+global quit_controller # ΜΕΤΑΒΛΗΤΗ ΓΙΑ ΤΗΝ ΣΩΣΤΗ ΕΞΟΔΟ ΤΟΥ ΠΡΟΓΡΑΜΜΑΤΟΣ
+filename_player_data = os.path.abspath("ranking.xlsx") # ΤΟ ΑΡΧΕΙΟ ΜΕ ΤΗΝ ΚΑΤΑΤΑΞΗ
+filename_out_ch = os.path.abspath("out.xlsx")#ΤΟ ΑΡΧΕΙΟ ΜΕ ΤΙΣ ΕΚΡΕΜΕΙΣ ΠΡΟΚΛΗΣΕΙΣ
+filename_valid_ch = os.path.abspath("valid.xlsx")#ΤΟ ΑΡΧΕΙΟ ΜΕ ΤΙΣ ΕΓΚΥΡΕΣ ΠΡΟΚΛΗΣΕΙΣ
+quit_controller = 0 
 ################################################################################################
-
+def STARTUP(): # ΣΥΝΑΡΤΗΣΗ ΠΟΥ ΦΟΡΤΩΝΕΙ ΤΗΝ ΚΑΤΑΤΑΞΗ ΣΤΗΝ ΑΡΧΗ ΤΟΥ ΠΡΟΓΡΑΜΜΑΤΟΣ
+    global quit_controller
+    read_config()
+    open_excel_file(filename_player_data,player_data)
+    open_excel_file(filename_out_ch,ch_out_matches)
+    open_excel_file(filename_valid_ch,ch_valid_matches)
+    load_class_player(filename_player_data,player_data)
+    load_class_out_match(filename_out_ch,ch_out_matches)
+    load_class_valid_match(filename_valid_ch,ch_valid_matches)
+    quit_controller = 1
+    return
+ ################################################################################################
 ######################################################
 ###EXCEL  ΕΠΙΚΕΦΑΛΙΔΕΣ                             ##
 ######################################################
@@ -45,12 +63,56 @@ ch_valid_matches_main = [] #ΑΠΟΘΗΚΕΥΕΙ ΤΙΣ ΚΛΑΣΕΙΣ ΤΩΝ Μ
 ##################################################################################
 #ΕΓΡΑΦΗ ΚΑΙ ΑΝΑΓΝΩΣΗ ΔΕΔΟΜΕΝΩΝ ΣΕ ΑΡΧΕΙΑ
 ##################################################################################
+def write_config():#ΓΡΑΦΕΙ ΤΙΣ ΡΥΘΜΙΣΕΙΣ ΣΕ ΑΡΧΕΙΟ ΙΝΙ
+    global WILDCARD
+    global MAX_CHALLENGES_OUT
+    global MAX_CHALLENGES_IN
+    global MAX_ACTIVE_CHALLENGES
+    global MAX_RANKING_CHALLENGE
+    global POINT_SET_MATCH
+    global filename_player_data
+    global filename_out_ch
+    global filename_valid_ch
+    global quit_controller
+
+    config_object = ConfigParser()
+    config_object["settings"] = {"WILDCARD":WILDCARD,"MAX_CHALLENGES_OUT":MAX_CHALLENGES_OUT,"MAX_CHALLENGES_IN":MAX_CHALLENGES_IN,"MAX_ACTIVE_CHALLENGES":MAX_ACTIVE_CHALLENGES,"MAX_RANKING_CHALLENGE":MAX_RANKING_CHALLENGE,"POINT_SET_MATCH":POINT_SET_MATCH,"ranking": filename_player_data,
+    "outstanding": filename_out_ch,"valid": filename_valid_ch }
     
+    with  open("config.ini",'w') as conf:
+        config_object.write(conf)
+        conf.close
+def read_config():# ΔΙΑΒΑΖΕΙ ΤΙΣ ΡΥΘΜΙΣΕΙΣ ΑΠΟ ΑΡΧΕΙΟ ΙΝΙ
+    global WILDCARD
+    global MAX_CHALLENGES_OUT
+    global MAX_CHALLENGES_IN
+    global MAX_ACTIVE_CHALLENGES
+    global MAX_RANKING_CHALLENGE
+    global POINT_SET_MATCH
+    global filename_player_data
+    global filename_out_ch
+    global filename_valid_ch
+    global quit_controller
+
+    config_object = ConfigParser()
+    config_object.read("config.ini")
+    settings = config_object["settings"]
+    WILDCARD = settings["WILDCARD"]
+    MAX_CHALLENGES_OUT = int(settings["MAX_CHALLENGES_OUT"])
+    MAX_CHALLENGES_IN = int(settings["MAX_CHALLENGES_IN"])
+    MAX_ACTIVE_CHALLENGES = int(settings["MAX_ACTIVE_CHALLENGES"])
+    MAX_RANKING_CHALLENGE = int(settings["MAX_RANKING_CHALLENGE"])
+    POINT_SET_MATCH = int(settings["POINT_SET_MATCH"])
+    filename_player_data = settings['ranking']
+    filename_out_ch = settings["outstanding"]
+    filename_valid_ch = settings["valid"] 
+
 def open_excel_file(filename,data): ##  ΑΝΟΙΓΕΙΕ ΕΝΑ ΑΡΧΕΙΟ EXCEL.XLSL ΚΑΙ ΑΝΤΙΓΡΑΦΕΙ ΤΑ ΠΕΡΙΕΧΟΜΕΝΑ ΤΟΥ ΣΕ ΜΙΑ ΛΙΣΤΑ
     wb = openpyxl.load_workbook(filename)
     sheet = wb.active
     max_row = sheet.max_row
     max_col = sheet.max_column
+    
     for i in range(2, max_row+1):
         for j in range( 1, max_col+1):
             cell = sheet.cell(i,j)
@@ -58,15 +120,13 @@ def open_excel_file(filename,data): ##  ΑΝΟΙΓΕΙΕ ΕΝΑ ΑΡΧΕΙΟ EXC
     return 
     
 def write_excel_file(filename,data,heads): ## ΑΝΤΙΓΡΑΦΕΙ ΤΑ ΔΕΔΟΜΕΝΑ ΜΙΑΣ ΛΙΣΤΑ ΣΕ ΕΝΑ ΦΥΛΛΟ EXCEL.XLSL ΕΙΣΟΔΟΙ -- ΟΝΟΜΑ ΑΡΧΕΙΟΥ--ΛΙΣΤΑ ΜΕ ΤΑ ΣΤΟΙΧΕΙΑ ΤΩΝ ΠΑΙΧΤΩΝ--ΛΙΣΤΑ ΜΕ ΚΕΦΑΛΙΔΕΣ ΓΙΑ ΤΟ ΕXCEL   
-    wb = openpyxl.load_workbook(filename)
+    wb = openpyxl.Workbook()
     sheet = wb.active
     temp = matrix(data,heads)
-    
     for i in range(len(heads)):
         cell = sheet.cell(1,i+1)
         cell.value = heads[i]
-        
-        
+     
     for row in range(len(temp)):
         for column in range(len(temp[row])):
             cell = sheet.cell(row+2,column+1)
@@ -89,19 +149,19 @@ class Player:
     def __init__(self,name,surname,age,matches_played,matches_won,matches_lost,sets_won,sets_lost,wildcard_state,challenges_given_state,challenges_taken_state,challenges_given,challenges_taken,challenges_final,challenges_final_state):
         self.name = name # ΟΝΟΜΑ
         self.surname = surname #ΕΠΩΝΥΜΟ
-        self.age = age # ΗΛΙΚΙΑ
-        self.matches_won = matches_won # ΚΕΡΔΙΣΜΕΝΑ ΠΑΙΧΝΙΔΙΑ
-        self.matches_lost = matches_lost #ΧΑΜΕΝΑ ΠΑΙΧΝΙΔΙΑ
-        self.matches_played = matches_played # ΣΥΝΟΛΟ ΠΑΙΧΝΙΔΙΩΝ
-        self.sets_won = sets_won # SETS ΠΟΥ ΚΕΡΔΙΣΕ Ο ΠΑΙΚΤΗΣ
-        self.set_lost = sets_lost # SETS ΠΟΥ ΕΧΑΣΕ Ο ΠΑΙΚΤΗΣ
-        self.wildcard_state = wildcard_state # WILDCARD STATE FALSE(0) TRUE(1) ΚΑΤΑΣΤΑΣΗ ΤΟΥ ΜΠΑΛΑΝΤΕΡ
-        self.challenges_given_state = challenges_given_state # ΚΑΤΑΣΤΑΣΗ ΤΟΥ ΑΝ ΜΠΟΡΕΙ ΝΑ ΔΩΣΕΙ ΠΡΟΚΛΗΣΕΙΣ FALSE(0) OR TRUE(1) 
-        self.challenges_taken_state = challenges_taken_state # ΚΑΤΑΣΤΑΣΗ ΤΟΥ ΑΝ ΜΠΟΡΕΙ ΝΑ ΔΕΚΤΕΙ ΠΡΟΚΛΗΣΗ FALSE(0) OR TRUE(1)
-        self.challenges_given = challenges_given # ΑΡΙΘΜΟΣ ΠΡΟΚΛΗΣΕΩΝ ΠΟΥ ΕΧΕΙ ΔΩΣΕΙ Ο ΠΑΙΚΤΗΣ ΔΕΝ ΜΠΟΡΕΙ ΝΑ ΕΙΝΑΙ ΜΕΓΑΛΥΤΕΡΟ ΑΠΟ ΤΟ MAX_CHALLENGES_OUT
-        self.challenges_taken = challenges_taken # ΑΡΙΘΜΟΣ ΠΡΟΚΛΗΣΕΩΝ ΠΟΥ ΜΠΟΡΕΙ ΝΑ ΔΕΚΤΕΙ Ο ΠΑΙΚΤΗΣ ΔΕΝ ΜΠΟΡΕΙ ΝΑ ΕΙΝΑΙ ΜΕΓΑΛΥΤΕΡΟ ΑΠΟ ΤΟ MAX_CHALLENGES_IΝ
-        self.challenges_final = challenges_final # ΑΡΙΘΜΟΣ ΠΡΟΚΛΗΣΕΩΝ ΠΟΥ ΕΧΕΙ ΑΠΟΔΕΚΤΕΙ Ο ΠΑΙΚΤΗΣ ΔΕΝ ΜΠΟΡΕΙ ΝΑ ΕΙΝΑΙ ΜΕΓΑΛΥΤΕΡΟ ΑΠΟ ΤΟ MAX_ACTIVE_CHALLENGES
-        self.challenges_final_state = challenges_final_state # ΚΑΤΑΣΤΑΣΗ ΤΟΥ ΕΑΝ Ο ΠΑΙΚΤΗΣ ΜΠΟΡΕΙ ΝΑ ΑΠΟΔΕΚΤΕΙ ΑΛΛΕΣ ΠΡΟΚΛΗΣΕΙΣ FALSE(0) OR TRUE(1)
+        self.age = int(age) # ΗΛΙΚΙΑ
+        self.matches_won = int(matches_won) # ΚΕΡΔΙΣΜΕΝΑ ΠΑΙΧΝΙΔΙΑ
+        self.matches_lost = int(matches_lost) #ΧΑΜΕΝΑ ΠΑΙΧΝΙΔΙΑ
+        self.matches_played = int(matches_played) # ΣΥΝΟΛΟ ΠΑΙΧΝΙΔΙΩΝ
+        self.sets_won = int(sets_won) # SETS ΠΟΥ ΚΕΡΔΙΣΕ Ο ΠΑΙΚΤΗΣ
+        self.set_lost = int(sets_lost) # SETS ΠΟΥ ΕΧΑΣΕ Ο ΠΑΙΚΤΗΣ
+        self.wildcard_state = bool(wildcard_state) # WILDCARD STATE FALSE(0) TRUE(1) ΚΑΤΑΣΤΑΣΗ ΤΟΥ ΜΠΑΛΑΝΤΕΡ
+        self.challenges_given_state = bool(challenges_given_state) # ΚΑΤΑΣΤΑΣΗ ΤΟΥ ΑΝ ΜΠΟΡΕΙ ΝΑ ΔΩΣΕΙ ΠΡΟΚΛΗΣΕΙΣ FALSE(0) OR TRUE(1) 
+        self.challenges_taken_state = bool(challenges_taken_state) # ΚΑΤΑΣΤΑΣΗ ΤΟΥ ΑΝ ΜΠΟΡΕΙ ΝΑ ΔΕΚΤΕΙ ΠΡΟΚΛΗΣΗ FALSE(0) OR TRUE(1)
+        self.challenges_given = int(challenges_given) # ΑΡΙΘΜΟΣ ΠΡΟΚΛΗΣΕΩΝ ΠΟΥ ΕΧΕΙ ΔΩΣΕΙ Ο ΠΑΙΚΤΗΣ ΔΕΝ ΜΠΟΡΕΙ ΝΑ ΕΙΝΑΙ ΜΕΓΑΛΥΤΕΡΟ ΑΠΟ ΤΟ MAX_CHALLENGES_OUT
+        self.challenges_taken = int(challenges_taken) # ΑΡΙΘΜΟΣ ΠΡΟΚΛΗΣΕΩΝ ΠΟΥ ΜΠΟΡΕΙ ΝΑ ΔΕΚΤΕΙ Ο ΠΑΙΚΤΗΣ ΔΕΝ ΜΠΟΡΕΙ ΝΑ ΕΙΝΑΙ ΜΕΓΑΛΥΤΕΡΟ ΑΠΟ ΤΟ MAX_CHALLENGES_IΝ
+        self.challenges_final = int(challenges_final) # ΑΡΙΘΜΟΣ ΠΡΟΚΛΗΣΕΩΝ ΠΟΥ ΕΧΕΙ ΑΠΟΔΕΚΤΕΙ Ο ΠΑΙΚΤΗΣ ΔΕΝ ΜΠΟΡΕΙ ΝΑ ΕΙΝΑΙ ΜΕΓΑΛΥΤΕΡΟ ΑΠΟ ΤΟ MAX_ACTIVE_CHALLENGES
+        self.challenges_final_state = bool(challenges_final_state) # ΚΑΤΑΣΤΑΣΗ ΤΟΥ ΕΑΝ Ο ΠΑΙΚΤΗΣ ΜΠΟΡΕΙ ΝΑ ΑΠΟΔΕΚΤΕΙ ΑΛΛΕΣ ΠΡΟΚΛΗΣΕΙΣ FALSE(0) OR TRUE(1)
     
         
     def increase_challenges_final(self): ###ΑΥΞΑΝΕΙ ΤΟΝ ΑΡΙΘΜΟ ΤΟΝ ΑΠΟΔΕΚΤΩΝ ΠΡΟΚΛΗΣΕΩΝ
@@ -121,7 +181,7 @@ class Player:
         return self.challenges_taken
 
     def alter_challenges_final_state(self): # ΕΛΕΓΧΕΙ  ΤΟ ΕΑΝ Ο ΠΑΙΚΤΗΣ ΕΧΕΙ ΑΠΟΔΕΚΤΕΙ ΠΕΡΙΣΣΟΤΕΡΕΣ ΠΡΟΚΛΗΣΕΙΣ ΑΠΟ ΤΙΣ ΕΠΙΤΡΕΠΟΜΕΝΕΣ
-        if(self.challenges_final>=MAX_ACTIVE_CHALLENGES):
+        if(self.challenges_final>=int(MAX_ACTIVE_CHALLENGES)):
             self.challenges_final_state=0
         else: self.challenges_final_state = 1
         return self.challenges_final_state
@@ -172,20 +232,20 @@ class Player:
         return
 
     def alter_wildcard_state(self): # ΑΛΛΑΖΕΙ ΤΗΝ ΚΑΤΑΣΤΑΣΗ ΤΟΥ ΜΠΑΛΑΝΤΕΡ ΕΑΝ Ο ΠΑΙΚΤΗΣ ΕΧΕΙ ΠΑΙΞΕΙ ΠΑΡΑΠΑΝΩ ΠΑΙΧΝΙΔΙΑ ΑΠΟ ΤΑ ΕΠΙΤΡΕΠΟΜΕΝΑ ΑΛΛΙΩΣ ΤΗΝ ΑΦΗΝΕΙ ΩΣ ΕΧΕΙ
-        if(self.matches_played>=WILDCARD):
+        if(self.matches_played>=int(WILDCARD)):
             self.wildcard_state=1
         else:
             self.wildcard_state=0
         return self.wildcard_state
 
     def alter_challenges_given_state(self): # ΕΛΕΧΕΙ ΕΑΝ Ο ΠΑΙΚΤΗΣ ΕΧΕΙ ΔΩΣΕΙ ΠΑΡΑΠΑΝΩ ΠΡΟΚΛΗΣΕΙΣ ΑΠΟ ΤΙΣ ΕΠΙΤΡΕΠΤΕΣ ΚΑΙ ΑΛΛΑΖΕΙ ΤΗΝ ΚΑΤΑΣΤΑΣΗ ΤΗΣ ΑΝΑΛΟΓΗΣ ΜΕΤΑΒΛΗΤΗΣ
-        if(self.challenges_given>=MAX_CHALLENGES_OUT):
+        if(self.challenges_given>=int(MAX_CHALLENGES_OUT)):
             self.challenges_given_state=0
         else: self.challenges_given_state=1
         return self.challenges_given_state
     
     def alter_challenges_taken_state(self): # ΕΛΕΓΧΕΙ ΕΑΝ Ο ΠΑΙΚΤΗΣ ΕΧΕΙ ΔΕΚΤΕΙ ΠΑΡΑΠΑΝΩ ΠΡΟΚΛΗΣΕΙΣ ΑΠΟ ΤΙΣ ΕΠΙΤΡΕΠΤΕΣ ΚΑΙ ΑΛΛΑΖΕΙ ΤΗΝ ΚΑΤΑΣΤΑΣΗ ΤΗΣ ΑΝΑΛΟΓΗΣ ΜΕΤΑΒΛΗΤΗΣ
-        if(self.challenges_taken>=MAX_CHALLENGES_IN):
+        if(self.challenges_taken>=int(MAX_CHALLENGES_IN)):
             self.challenges_taken_state=0
         else:
             self.challenges_taken_state=1
@@ -195,7 +255,7 @@ class Player:
         return f"Ονομα\t\t{self.name}\t\tΕπώνυμο\t\t{self.surname}\t\tΗλικία\t\t{self.age}"
     
     def __str__stats__(self):# ΤΥΠΩΝΕΙ ΤΗΝ ΚΛΑΣΗ ΠΑΙΚΤΗ ΓΙΑ ΤΗΝ ΕΚΤΥΠΩΣΕΗ ΚΑΤΑΤΑΞΗΣ ΜΕ ΣΤΑΤΙΣΤΙΚΑ
-        return f"{self.name}\t\t{self.surname}\t\tΣύνολο\t{self.matches_played}\tΝίκες\t{self.matches_won}\tΗττες\t{self.matches_lost}\tΚερδισμένα σετ\t{self.sets_won}\tΧαμένα σετ\t{self.set_lost}"
+        return f"{self.name}\t\t{self.surname}\t\tΠαίχτηκαν\t{self.matches_played}\tΝίκες\t{self.matches_won}\tΗττες\t{self.matches_lost}\tΚερδισμένα σετ\t{self.sets_won}\tΧαμένα σετ\t{self.set_lost}"
 
 ###############################################################
 #### CLASS CHALLENGE MATCH                                  ###
@@ -207,11 +267,11 @@ class Challenge_Match:
         self.name_taker = taker_name  # ΟΝΟΜΑ ΠΑΙΚΤΗ ΠΟΥ ΕΙΝΑΙ ΣΤΟΧΟΣ ΤΗΣ ΠΡΟΚΛΗΣΗΣ
         self.giver_surname = giver_surname    #ΕΠΩΝΥΜΟ ΠΑΙΚΤΗ ΠΟΥ ΔΙΝΕΙ ΤΗΝ ΠΡΟΚΛΗΣΗ
         self.taker_surname = taker_surname   # ΕΠΩΝΥΜΟ ΠΑΙΚΤΗ ΠΟΥ ΕΙΝΑΙ ΣΤΟΧΟΣ ΤΗΣ ΠΡΟΚΛΗΣΗΣ
-        self.taker_serial = taker_serial #ΑΡΙΘΜΟΣ ΚΑΤΑΤΑΞΗΣ ΠΑΙΚΤΗ ΠΟΥ ΕΙΝΑΙ ΣΤΟΧΟΣ ΤΗΣ ΠΡΟΚΛΗΣΗΣ
-        self.giver_serial = giver_serial # ΑΡΙΘΜΟΣ ΚΑΤΑΤΑΞΗΣ ΠΑΙΚΤΗ ΠΟΥ ΔΙΝΕΙ ΤΙΝ ΠΡΟΚΛΗΣΗ
+        self.taker_serial = int(taker_serial) #ΑΡΙΘΜΟΣ ΚΑΤΑΤΑΞΗΣ ΠΑΙΚΤΗ ΠΟΥ ΕΙΝΑΙ ΣΤΟΧΟΣ ΤΗΣ ΠΡΟΚΛΗΣΗΣ
+        self.giver_serial = int(giver_serial) # ΑΡΙΘΜΟΣ ΚΑΤΑΤΑΞΗΣ ΠΑΙΚΤΗ ΠΟΥ ΔΙΝΕΙ ΤΙΝ ΠΡΟΚΛΗΣΗ
 
     def __str__(self): ## ΕΚΤΥΠΩΣΗ ΤΗΣ ΚΛΑΣΗΣ ΓΙΑ ΤΑ ΜΑΤΣ ΠΡΟΚΛΗΣΗΣ
-        return f"Κατάταξη\t{self.taker_serial+1}\t{self.name_taker}\t{self.taker_surname}\t\tVS\t\tΚατάταξη\t{self.giver_serial+1}\t{self.name_giver}\t{self.giver_surname}"
+        return f"Κατάταξη\t{(self.taker_serial+1)}\t{self.name_taker}\t{self.taker_surname}\t\tVS\t\tΚατάταξη\t{self.giver_serial+1}\t{self.name_giver}\t{self.giver_surname}"
 
 ################################################################        
 ####ΓΡΑΦΕΙ ΣΤΗΝ PLAYER_DATA_MAIN                  ##############
@@ -248,13 +308,13 @@ def load_class_player(filename,list): #ΑΥΤΗ Η ΣΥΝΑΡΤΗΣΗ ΦΟΡΤΩ
         matches_lost=int(cellF.value)
         sets_won=int(cellG.value)
         sets_lost=int(cellH.value)
-        wildcard_state=int(cellI.value)
-        challenges_given_state=int(cellJ.value)
-        challenges_taken_state=int(cellK.value)
-        challenges_given=int(cellL.value)
-        challenges_taken=int(cellM.value)
-        challenges_final=int(cellN.value)
-        challenges_final_state=int(cellO.value)
+        wildcard_state = cellI.value
+        challenges_given_state = cellJ.value
+        challenges_taken_state = cellK.value
+        challenges_given = cellL.value
+        challenges_taken = cellM.value
+        challenges_final = cellN.value
+        challenges_final_state = cellO.value
         player_data_main.append(Player(name,surname,age,matches_played,matches_won,matches_lost,sets_won,sets_lost,wildcard_state,challenges_given_state,challenges_taken_state,challenges_given,challenges_taken,challenges_final,challenges_final_state))
     return
 #################################################################    
@@ -286,10 +346,10 @@ def load_class_out_match(filename,list): # ΦΟΡΤΩΝΕΙ ΑΠΟ ΤΟ ΑΡΧΕ
         cellF = sheet.cell(i,6)
         name_taker = cellA.value
         surname_taker = cellB.value
-        ch_taker_serial = int(cellC.value)
+        ch_taker_serial = cellC.value
         name_giver = cellD.value
         surname_giver = cellE.value
-        ch_giver_serial = int(cellF.value)
+        ch_giver_serial = cellF.value
         ch_out_matches_main.append(Challenge_Match(name_taker,surname_taker,ch_taker_serial,name_giver,surname_giver,ch_giver_serial))
     return
 #####################################################################
@@ -321,11 +381,11 @@ def load_class_valid_match(filename,list): # ΦΟΡΤΩΝΕΙ ΑΠΟ ΤΟ ΑΡΧ
         cellF = sheet.cell(i,6)
         name_taker = cellA.value
         surname_taker = cellB.value
-        ch_taker_serial = int(cellC.value)
+        ch_taker_serial = cellC.value
         name_giver = cellD.value
         surname_giver = cellE.value
-        ch_giver_serial = int(cellF.value)
-        ch_out_matches_main.append(Challenge_Match(name_taker,surname_taker,ch_taker_serial,name_giver,surname_giver,ch_giver_serial))  
+        ch_giver_serial = cellF.value
+        ch_valid_matches_main.append(Challenge_Match(name_taker,surname_taker,ch_taker_serial,name_giver,surname_giver,ch_giver_serial))  
     return
 ###ΕΓΡΑΦΗ ΝΕΟΥ ΠΑΙΚΤΗ###
 def add_class(Name,Surname,Age): # ΚΑΝΕΙ ΤΗΝ ΕΓΡΑΦΗ ΕΝΟΣ ΝΕΟΥ ΠΑΙΚΤΗ ΣΤΗΝ PLAYER_DATA ΚΑΘΩΣ ΚΑΙ ΣΤΗΝ PLAYER_DATA_MAIN
@@ -362,7 +422,7 @@ def del_list(data,heads,ranking_position):##ΣΒΗΝΕΙ ΑΠΟ ΤΗΝ ΛΙΣΤ�
     return
     
 def del_classes(list,ranking_position):##ΣΒΗΝΕΙ ΑΠΟ ΤΗΝ ΛΙΣΤΑ ΕΙΣΟΔΟΥ ΕΝΑ ΠΑΙΚΤΗ ΠΟΥ ΑΝΑΛΟΓΕΙ ΣΤΗΝ ΚΑΤΑΤΑΞΗ
-    del list[ranking_position]
+     del list[ranking_position]
 ##################################################################################
 ###################ΛΟΓΙΚΗ ΠΡΟΚΛΗΣΕΩΝ##############################################
 ###TRUE ΕΓΚΥΡΗ ΠΡΟΚΛΗΣΗ                                                          #
@@ -378,8 +438,7 @@ def MAIN_LOGIC_OF_CHECK_CHALLENGE_WILD(giver,taker): ### MAIN FUCTION TO CHECK F
     player_data_main[giver].alter_challenges_final_state() # ΚΑΛΕΙ ΤΗΝ ΣΥΝΑΡΤΗΣΗ ΚΛΑΣΗΣ ΠΟΥ ΕΛΕΓΧΕΙ ΤΗΝ ΚΑΤΑΣΤΑΣΗ ΕΝΕΡΓΩΝ ΠΡΟΚΛΗΣΕΩΝ ΤΟΥ ΠΑΙΚΤΗ ΠΟΥ ΕΣΤΕΙΛΕ ΤΗΝ ΠΡΟΚΛΗΣΗ
     if(player_data_main[giver].wildcard_state==1 and player_data_main[giver].challenges_given_state==1 and player_data_main[giver].challenges_final_state==1 and player_data_main[taker].challenges_taken_state==1 and player_data_main[taker].challenges_final_state==1 and giver>taker):
         return 1 ## TRUE 
-    
-    return 0    ##FALSE
+    else:return 0    ##FALSE
 ### Η ΛΟΓΙΚΗ ΑΥΤΗΣ ΤΗΣ ΣΥΝΑΡΤΗΣΗΣ ΕΙΝΑΙ ΟΤΙ ΕΑΝ Ο ΠΑΙΚΤΗΣ ΠΟΥ ΚΑΝΕΙ ΤΗΝ ΠΡΟΚΛΗΣΗ ΔΕΝ ΕΧΕΙ ΜΠΑΛΑΝΤΕΡ ΑΛΛΑ Η ΠΡΟΚΛΗΣΗ ΕΙΝΑΙ ΕΚΓΥΡΗ ΛΟΓΩ ΚΑΤΑΤΑΞΗΣ(ΑΠΟΣΤΑΣΗΣ ΤΩΝ ΔΥΟ ΠΑΙΚΤΩΝ) ΚΑΙ Ο ΑΠΟΣΤΟΛΕΑΣ ΜΠΟΡΕΙ ΝΑ ΔΩΣΕΙ ΠΡΟΚΛΗΣΗ ΚΑΙ Ο ΣΤΟΧΟΣ ΝΑ ΔΕΚΤΕΙ
 def MAIN_LOGIC_OF_CHECK_CHALLENGE_VALID(giver,taker):
     player_data_main[giver].alter_challenges_final_state() # ΚΑΛΕΙ ΤΗΝ ΣΥΝΑΡΤΗΣΗ ΚΛΑΣΗΣ ΠΟΥ ΕΛΕΓΧΕΙ ΤΗΝ ΚΑΤΑΣΤΑΣΗ ΕΝΕΡΓΩΝ ΠΡΟΚΛΗΣΕΩΝ ΓΙΑ ΤΟΝ ΑΠΟΣΤΟΛΕΑ
@@ -387,12 +446,12 @@ def MAIN_LOGIC_OF_CHECK_CHALLENGE_VALID(giver,taker):
     player_data_main[taker].alter_challenges_taken_state() #ΚΑΛΕΙ ΤΗΝ ΣΥΝΑΡΤΗΣΗ ΚΛΑΣΗΣ ΠΟΥ ΕΛΕΓΧΕΙ ΤΗΝ ΚΑΤΑΣΤΑΣΗ ΑΠΟΔΕΚΤΩΝ ΠΡΟΚΛΗΣΕΩΝ ΓΙΑ ΤΟΝ ΣΤΟΧΟ ΤΗΣ ΠΡΟΚΛΗΣΗΣ
     if(player_data_main[giver].wildcard_state==0 and giver>taker and abs(giver-taker)<=MAX_RANKING_CHALLENGE and player_data_main[giver].challenges_given_state==1 and player_data_main[taker].challenges_taken_state==1):
         return 1 ## TRUE 
-    
-    return 0 ## FALSE 
+    else:return 0 ## FALSE 
 
 def MAIN_LOGIC_CHK_DUP_CHAL(position1,position2): ##ΕΛΕΓΧΕΙ ΓΙΑ ΕΠΑΝΑΛΑΜΒΑΝΟΜΕΝΕΣ ΠΡΟΚΛΗΣΕΙΣ ΔΗΛΑΔΗ ΕΑΝ ΕΧΕΙ ΔΟΘΕΙ ΗΔΗ ΠΡΟΚΛΗΣΗ ΣΤΟΝ ΠΑΙΚΤΗ ΑΥΤΟ Ο ΕΛΕΓΧΟΣ ΓΙΝΕΤΑΙ ΒΑΣΗ ΟΝΟΜΑΤΩΝ
     for i in range(len(ch_out_matches_main)):
         if((ch_out_matches_main[i].giver_serial==position1 and ch_out_matches_main[i].taker_serial==position2) or (ch_out_matches_main[i].giver_serial==position2 and ch_out_matches_main[i].taker_serial==position1)):
+            print("MAIN LOGIC DUPLICATE CHALLENGES 0")
             return 0 ## FALSE 
     return 1 ##TRUE
         
@@ -434,35 +493,53 @@ def SWAP(data,winner,loser):# Η ΣΥΝΑΡΤΗΣΗ ΑΥΤΗ ΔΕΧΕΤΕ ΜΙΑ
 class MAIN(tkinter.Tk):
     def __init__(self):
         super().__init__()
-        self.attributes('-fullscreen',True)
         self.title("Πρόγραμμα Κατάταξης Τέννις")
         self.screen_width = self.winfo_screenwidth()
         self.screen_height = self.winfo_screenheight()
         self.geometry(f"{self.screen_width}x{self.screen_height}")
-        self.text=tkinter.Text(self,bg="black",fg="white",font=("System",12,"bold"),bd=8,yscrollcommand=True,xscrollcommand=True,width=120,height=50)
+        self.text = tkinter.Text(bg='navy blue',fg = 'yellow',height=40,width = 120)
         self.text.pack(anchor=tkinter.N,side=tkinter.TOP)
-        tkinter.Button(self,height=1,width=30,text = "Εξοδος",activebackground="white",activeforeground="red",bd=8,relief=tkinter.RAISED,fg="black",font=("System",12),highlightcolor="black",command=self.terminate).pack(anchor=tkinter.SW,side=tkinter.LEFT)
-        tkinter.Button(self,height=1,width=30,text = "Ρυθμίσεις",activebackground="white",activeforeground="red",bd=8,relief=tkinter.RAISED,fg="black",font=("System",12),highlightcolor="black",command=self.settings).pack(anchor=tkinter.SW,side=tkinter.LEFT)
-        tkinter.Button(self,height=1,width=30,text ="Εκτύπωση Κατάταξης",activebackground="white",activeforeground="red",bd=8,relief=tkinter.RAISED,fg="black",font=("System",12),highlightcolor="black",command=self.print_ranking).pack(anchor=tkinter.SE,side=tkinter.LEFT)
-        tkinter.Button(self,height=1,width=30,text ="Εκτύπωση Κατάταξης Με Στατιστικά",activebackground="white",activeforeground="red",bd=8,relief=tkinter.RAISED,fg="black",font=("System",12),highlightcolor="black",command=self.print_ranking_stats).pack(anchor=tkinter.SE,side=tkinter.LEFT)
-        tkinter.Button(self,height=1,width=40,text ="Εκτύπωση Εκρρεμών Μάτς Πρόκλησης",activebackground="white",activeforeground="red",bd=8,relief=tkinter.RAISED,fg="black",font=("System",12),highlightcolor="black",command=self.print_out_ch_matches).pack(anchor=tkinter.SE,side=tkinter.LEFT)
-        tkinter.Button(self,height=1,width=40,text ="Εκτύπωση Ενεργών Μάτς Πρόκλησης",activebackground="white",activeforeground="red",bd=8,relief=tkinter.RAISED,fg="black",font=("System",12),highlightcolor="black",command=self.print_valid_ch_matches).pack(anchor=tkinter.SE,side=tkinter.LEFT)
-        tkinter.Button(self,height=1,width=40,text ="Διαχείριση Εκρεμών Μάτς Πρόκλησης",activebackground="white",activeforeground="red",bd=8,relief=tkinter.RAISED,fg="black",font=("System",12),highlightcolor="black",command=self.ch_out_man).pack(anchor=tkinter.SE,side=tkinter.LEFT)
-        tkinter.Button(self,height=1,width=40,text ="Ενημέρωση Ενεργών Μάτς Πρόκλησης ",activebackground="white",activeforeground="red",bd=8,relief=tkinter.RAISED,fg="black",font=("System",12),highlightcolor="black",command=self.ch_valid_man).pack(anchor=tkinter.SE,side=tkinter.LEFT)
-        tkinter.Button(self,height=1,width=30,text ="Νέο Μάτς Πρόκλησης",activebackground="white",activeforeground="red",bd=8,relief=tkinter.RAISED,fg="black",font=("System",12),highlightcolor="black",command=self.new_ch_match).pack(anchor=tkinter.SE,side=tkinter.LEFT)
-        tkinter.Button(self,height=1,width=30,text ="Διαγραφή Παίχτη",activebackground="white",activeforeground="red",bd=8,relief=tkinter.RAISED,fg="black",font=("System",12),highlightcolor="black",command=self.del_player).pack(anchor=tkinter.SE,side=tkinter.LEFT)
-        tkinter.Button(self,height=1,width=30,text ="Εγγραφή Νέου Παίχτη",activebackground="white",activeforeground="red",bd=8,relief=tkinter.RAISED,fg="black",font=("System",12),highlightcolor="black",command=self.add_player).pack(anchor=tkinter.SE,side=tkinter.LEFT)
+        self.right_text = tkinter.Text(bg='navy blue',fg='yellow',height = 40,width = 120)
+        self.right_text.pack(anchor=tkinter.NE,side = tkinter.RIGHT)
+        self.left_text = tkinter.Text(bg = 'navy blue',fg = 'yellow',height = 40,width=120)
+        self.left_text.pack(anchor=tkinter.NW,side = tkinter.LEFT)
+        self.terminate = tkinter.Button(self,height=1,width=10,text = "Εξοδος",activebackground="white",activeforeground="red",bd=8,relief=tkinter.RAISED,fg="black",font=("System",12),highlightcolor="black",command=self.terminate)
+        self.terminate.pack(anchor = tkinter.SE,side=tkinter.RIGHT)
+        self.settings_button = tkinter.Button(self,height=1,width=10,text = "Ρυθμίσεις",activebackground="white",activeforeground="red",bd=8,relief=tkinter.RAISED,fg="black",font=("System",12),highlightcolor="black",command=self.settings)
+        self.settings_button.pack(anchor = tkinter.SW,side=tkinter.BOTTOM)
+        self.print_ranking_button = tkinter.Button(self,height=1,width=20,text ="Εκτύπωση Κατάταξης",activebackground="white",activeforeground="red",bd=8,relief=tkinter.RAISED,fg="black",font=("System",12),highlightcolor="black",command=self.print_ranking)
+        self.print_ranking_button.pack(anchor = tkinter.S,side=tkinter.BOTTOM)
+        self.print_stats = tkinter.Button(self,height=1,width=35,text ="Εκτύπωση Κατάταξης Με Στατιστικά",activebackground="white",activeforeground="red",bd=8,relief=tkinter.RAISED,fg="black",font=("System",12),highlightcolor="black",command=self.print_ranking_stats)
+        self.print_stats.pack(anchor = tkinter.S,side=tkinter.BOTTOM)
+        self.print_out = tkinter.Button(self,height=1,width=35,text ="Εκτύπωση Εκρρεμών Μάτς Πρόκλησης",activebackground="white",activeforeground="red",bd=8,relief=tkinter.RAISED,fg="black",font=("System",12),highlightcolor="black",command=self.print_out_ch_matches)
+        self.print_out.pack(anchor = tkinter.S,side=tkinter.BOTTOM)
+        self.print_valid = tkinter.Button(self,height=1,width=35,text ="Εκτύπωση Ενεργών Μάτς Πρόκλησης",activebackground="white",activeforeground="red",bd=8,relief=tkinter.RAISED,fg="black",font=("System",12),highlightcolor="black",command=self.print_valid_ch_matches)
+        self.print_valid.pack(anchor = tkinter.S,side=tkinter.BOTTOM)
+        self.man_out = tkinter.Button(self,height=1,width=35,text ="Διαχείριση Εκρεμών Μάτς Πρόκλησης",activebackground="white",activeforeground="red",bd=8,relief=tkinter.RAISED,fg="black",font=("System",12),highlightcolor="black",command=self.ch_out_man)
+        self.man_out.pack(anchor = tkinter.S,side=tkinter.BOTTOM)
+        self.man_valid = tkinter.Button(self,height=1,width=35,text ="Ενημέρωση Ενεργών Μάτς Πρόκλησης ",activebackground="white",activeforeground="red",bd=8,relief=tkinter.RAISED,fg="black",font=("System",12),highlightcolor="black",command=self.ch_valid_man)
+        self.man_valid.pack(anchor = tkinter.S,side=tkinter.BOTTOM)
+        self.ch_new_match = tkinter.Button(self,height=1,width=20,text ="Νέο Μάτς Πρόκλησης",activebackground="white",activeforeground="red",bd=8,relief=tkinter.RAISED,fg="black",font=("System",12),highlightcolor="black",command=self.new_ch_match)
+        self.ch_new_match.pack(anchor = tkinter.S,side=tkinter.BOTTOM)
+        self.del_pl = tkinter.Button(self,height=1,width=20,text ="Διαγραφή Παίχτη",activebackground="white",activeforeground="red",bd=8,relief=tkinter.RAISED,fg="black",font=("System",12),highlightcolor="black",command=self.del_player)
+        self.del_pl.pack(anchor = tkinter.S,side=tkinter.BOTTOM)
+        self.new_pl = tkinter.Button(self,height=1,width=20,text ="Εγγραφή Νέου Παίχτη",activebackground="white",activeforeground="red",bd=8,relief=tkinter.RAISED,fg="black",font=("System",12),highlightcolor="black",command=self.add_player)
+        self.new_pl.pack(anchor = tkinter.S,side=tkinter.BOTTOM)
     
     ####ΚΟΥΜΠΙ ΤΕΡΜΑΤΙΣΜΟΥ####
     def terminate(self):
-        global filename_player_data
-        global filename_out_ch
-        global filename_valid_ch
-        write_excel_file(filename_player_data,player_data,heads_players)
-        write_excel_file(filename_out_ch,ch_out_matches,heads_ch_out_match)
-        write_excel_file(filename_valid_ch,ch_valid_matches,heads_ch_valid_match)
-        root.destroy()
-        
+        global quit_controller
+        if(quit_controller==1):
+            global filename_player_data
+            global filename_out_ch
+            global filename_valid_ch
+            write_excel_file(filename_player_data,player_data,heads_players)
+            write_excel_file(filename_out_ch,ch_out_matches,heads_ch_out_match)
+            write_excel_file(filename_valid_ch,ch_valid_matches,heads_ch_valid_match)
+            write_config()
+            root.destroy()
+        else:
+            root.destroy()
    
     ###ΤΥΠΩΝΕΙ ΤΗΝ ΒΑΣΙΚΗ ΚΑΤΑΤΑΞΗ###
     def print_ranking(self): 
@@ -484,19 +561,19 @@ class MAIN(tkinter.Tk):
 
     ###ΤΥΠΩΝΕΙ ΤΑ ΜΑΤΣ ΠΡΟΚΛΗΣΗΣ ΠΟΥ ΕΙΝΑΙ ΕΚΡΕΜΗ###
     def print_out_ch_matches(self):
-        self.text.configure(state = 'normal')
-        self.text.delete('1.0','end')
+        self.left_text.configure(state = 'normal')
+        self.left_text.delete('1.0','end')
         for i in range(len(ch_out_matches_main)):
-             self.text.insert(tkinter.INSERT,"Πρόκληση"+'\t'+ str(i+1)+'η'+'\t' + ch_out_matches_main[i].__str__()+'\n')
-        self.text.configure(state = 'disabled')
+             self.left_text.insert(tkinter.INSERT,"Πρόκληση"+'\t'+'\t'+str(i+1)+'η'+'\t' + ch_out_matches_main[i].__str__()+'\n')
+        self.left_text.configure(state = 'disabled')
 
     ###ΤΥΠΩΝΕΙ ΤΑ ΜΑΤΣ ΠΡΟΚΛΗΣΗΣ ΠΟΥ ΕΙΝΑΙ ΕΝΕΡΓΑ###
     def print_valid_ch_matches(self):
-        self.text.configure(state='normal')
-        self.text.delete('1.0','end')
+        self.right_text.configure(state='normal')
+        self.right_text.delete('1.0','end')
         for i in range(len(ch_valid_matches_main)):
-            self.text.insert(tkinter.INSERT,"Κατάταξη"+'\t'+str(i+1)+ch_valid_matches_main[i].__str__()+'\n')
-        self.text.configure(state = 'disabled')
+            self.right_text.insert(tkinter.INSERT,"Πρόκληση"+'\t'+str(i+1)+'η'+'\t'+ch_valid_matches_main[i].__str__()+'\n')
+        self.right_text.configure(state = 'disabled')
     ###ΔΙΑΧΕΙΡΙΣΗ ΕΚΚΡΕΜΩΝ ΜΑΤΣ ΠΡΟΚΛΗΣΗΣ###
     def ch_out_man(self):
         top = OUTSTANDING_CHALLENGE_MATCH(self)
@@ -622,7 +699,8 @@ class SETTINGS(tkinter.Toplevel):
         self.max_ch_ranking = tkinter.IntVar()
         self.max_in = tkinter.IntVar()
         self.max_out = tkinter.IntVar()
-        self.max_active = tkinter.IntVar()  
+        self.max_active = tkinter.IntVar() 
+        self.max_sets = tkinter.IntVar() 
         tkinter.Label(self,text="Μάτς για Μπαλαντέρ",fg="black",font=("System",12,"bold")).pack(anchor=tkinter.N,side=tkinter.TOP)
         tkinter.Entry(self,fg="black",font=("System",12,"bold"),textvariable=self.wildcard).pack(anchor=tkinter.N,side=tkinter.TOP)
         tkinter.Label(self,text="Απόσταση στην Κατάταξη",fg="black",font=("System",12,"bold")).pack(anchor=tkinter.N,side=tkinter.TOP)
@@ -631,8 +709,10 @@ class SETTINGS(tkinter.Toplevel):
         tkinter.Entry(self,fg="black",font=("System",12,"bold"),textvariable=self.max_out).pack(anchor=tkinter.N,side=tkinter.TOP)
         tkinter.Label(self,text="Προκλήσεις Εισόδου",fg="black",font=("System",12,"bold")).pack(anchor=tkinter.N,side=tkinter.TOP)
         tkinter.Entry(self,fg="black",font=("System",12,"bold"),textvariable=self.max_in).pack(anchor=tkinter.N,side=tkinter.TOP)
-        tkinter.Label(self,text="Mέγιστος αριθμός Επιτρεπώμενω Ενεργών Προκήσεων",fg="black",font=("System",12,"bold")).pack(anchor=tkinter.N,side=tkinter.TOP)
+        tkinter.Label(self,text="Mέγιστος αριθμός Επιτρεπώμενω Ενεργών Προκλήσεων",fg="black",font=("System",12,"bold")).pack(anchor=tkinter.N,side=tkinter.TOP)
         tkinter.Entry(self,fg="black",font=("System",12,"bold"),textvariable=self.max_active).pack(anchor=tkinter.N,side=tkinter.TOP)
+        tkinter.Label(self,text="Mέγιστος αριθμός σετ που πρέπει να κερδίσει ο παίκτης για να πάρει το παιχνίδι",fg="black",font=("System",12,"bold")).pack(anchor=tkinter.N,side=tkinter.TOP)
+        tkinter.Entry(self,fg="black",font=("System",12,"bold"),textvariable=self.max_sets).pack(anchor=tkinter.N,side=tkinter.TOP)
         tkinter.Button(self,height=1,width=10,text = "Επιστροφή",activebackground="white",activeforeground="red",bd=8,relief=tkinter.RAISED,fg="black",font=("System",12),highlightcolor="black",command=self.destroy).pack(anchor=tkinter.SW,side=tkinter.LEFT)
         tkinter.Button(self,height=1,width=15,text = "Φόρτωση Αρχείου",activebackground="white",activeforeground="red",bd=8,relief=tkinter.RAISED,fg="black",font=("System",12),highlightcolor="black",command=self.load_from_file).pack(anchor=tkinter.SW,side=tkinter.RIGHT)
         tkinter.Button(self,height=1,width=10,text = "Εγγραφή",activebackground="white",activeforeground="red",bd=8,relief=tkinter.RAISED,fg="black",font=("System",12),highlightcolor="black",command=self.define_settings).pack(anchor=tkinter.SW,side=tkinter.RIGHT)
@@ -643,22 +723,27 @@ class SETTINGS(tkinter.Toplevel):
         global MAX_CHALLENGES_IN
         global MAX_CHALLENGES_OUT
         global MAX_ACTIVE_CHALLENGES
+        global POINT_SET_MATCH
         try:
             WILDCARD = self.wildcard.get()
             MAX_RANKING_CHALLENGE = self.max_ch_ranking.get()
             MAX_CHALLENGES_IN = self.max_in.get()
             MAX_CHALLENGES_OUT = self.max_out.get()
             MAX_ACTIVE_CHALLENGES = self.max_active.get()
+            POINT_SET_MATCH = self.max_sets.get()
+            write_config()
             top = CONFIRMED(self)
             top.grab_set()
         except:
             top = FAILED(self)
             top.grab_set()
         return WILDCARD,MAX_RANKING_CHALLENGE,MAX_CHALLENGES_IN,MAX_CHALLENGES_OUT
+    
     def load_from_file(self):
         global filename_player_data
         global filename_out_ch
         global filename_valid_ch
+        global quit_controller
         filename_player_data= tkinter.filedialog.askopenfilename(title='Αρχείο Κατάταξης')
         filename_out_ch = tkinter.filedialog.askopenfilename(title='Εκρεμη Μάτς Πρόκλησης')
         filename_valid_ch = tkinter.filedialog.askopenfilename(title='Ενεργά Μάτς Πρόκλησης')
@@ -668,6 +753,7 @@ class SETTINGS(tkinter.Toplevel):
         load_class_player(filename_player_data,player_data)
         load_class_out_match(filename_out_ch,ch_out_matches)
         load_class_valid_match(filename_valid_ch,ch_valid_matches)
+        quit_controller = 1
         return
        
     
@@ -695,24 +781,26 @@ class NEW_CHALLENGE_MATCH(tkinter.Toplevel):
             if( giver >=1 and giver <= (len(player_data_main)+1)  and taker >=1 and taker <=len(player_data_main)+1):
            ### ΕΛΕΓΧΕΙ ΑΝ ΟΙ ΑΡΙΘΜΟΙ ΕΙΝΑΙ ΣΤΗΝ ΕΠΙΤΡΕΠΟΜΕΝΗ ΑΠΟΣΤΑΣΗ
                 if(MAIN_LOGIC_ALL(giver-1,taker-1)==1): #ΑΝ ΜΠΟΡΕΙ ΝΑ ΔΟΘΕΙ ΠΡΟΚΛΗΣΗ
-                    
+                   
                     player_data_main[giver-1].increase_challenges_given()   #ΑΥΞΑΝΕΙ ΤΙΣ ΠΡΟΚΛΗΣΕΙΣ ΠΟΥ ΕΔΩΣΕ Ο ΠΡΟΚΛΗΤΗΣ
                     
                     player_data_main[taker-1].increase_challenges_taken()   #ΑΥΞΑΝΕΙ ΤΙΣ ΠΡΟΚΛΗΣΕΙΣ ΠΟΥ ΔΕΧΤΗΚΕ ΑΥΤΟΣ ΠΟΥ ΠΡΟΚΛΗΘΗΚΕ
-                    
+                 
                     player_data_main[giver-1].alter_challenges_given_state() #ΕΛΕΓΧΕΙ ΤΑ ΟΡΙΑ ΠΡΟΚΛΗΣΕΩΝ
                     
                     player_data_main[taker-1].alter_challenges_taken_state() #ΕΛΕΓΧΕΙ ΤΑ ΟΡΙΑ ΠΡΟΚΛΗΣΕΩΝ
                     
                     player_data_main[giver-1].alter_wildcard_state()            #ΑΛΛΑΖΕΙ ΤΗΝ ΚΑΤΑΣΤΑΣΗ ΤΟΥ ΜΠΑΛΑΝΤΕΡ
-                    
+                   
                     player_data_main[giver-1].increase_challenges_final()       #ΑΥΞΑΝΕΙ ΤΙΣ ΠΡΟΚΛΗΣΕΙΣ ΑΠΟΔΕΚΤΕΣ ΤΟΥ ΔΟΤΗ
                     
                     player_data_main[giver-1].alter_challenges_final_state()    #ΑΛΛΑΖΕΙ ΤΗΝ ΚΑΤΑΣΤΑΣΗ ΑΠΟΔΕΚΤΩΝ ΠΡΟΚΛΗΣΕΩΝ ΓΙΑ ΤΟΝ ΔΟΤΗ
-                    
-                    create_class_challenge_match((taker-1),(giver-1)) # ΓΡΑΦΕΙ ΤΟ ΜΑΤΣ ΠΡΟΚΛΗΣHΣ ΣΤΟΝ ΠΙΝΑΚΑ 
+                   
+                    create_class_challenge_match((taker-1),(giver-1)) # ΓΡΑΦΕΙ ΤΟ ΜΑΤΣ ΠΡΟΚΛΗΣHΣ ΣΤΟΝ ΠΙΝΑΚΑ
+                    root.print_out_ch_matches()
                     top = CONFIRMED(self)
                     top.grab_set()
+                    
                     
                 else:
                     top = FAILED(self)
@@ -726,6 +814,7 @@ class NEW_CHALLENGE_MATCH(tkinter.Toplevel):
         except:
                top = FAILED(self)
                top.grab_set()
+              
                
 
 ###ΚΛΑΣΗ ΥΠΟΜΕΝΟΥ ΕΝΗΜΕΡΩΣΗ ΕΝΕΡΓΩΝ ΜΑΤΣ ΠΡΟΚΛΗΣΗΣ###
@@ -785,7 +874,7 @@ class BRIEF_CHALLENGE_MATCH(tkinter.Toplevel):
                 player_data_main[winner-1].decrease_challenges_final()#ΑΛΛΑΓΗ ΤΗΣ ΚΑΤΑΣΤΑΣΗΣ ΕΝΕΡΓΩΝ ΠΡΟΚΛΗΣΕΩΝ
                 
                 player_data_main[loser-1].decrease_challenges_final() # ΜΕΙΩΣΗ ΤΟΝ ΕΝΕΡΓΩΝ ΠΡΟΚΛΗΣΕΩΝ
-                print('12')
+            
                 player_data_main[winner-1].reset_wildcard_state()#ΕΛΕΓΧΟΣ ΚΑΙ ΡΕΣΕΤ ΣΤΟ ΜΠΑΛΑΝΤΕΡ
                 
                 player_data_main[loser-1].reset_wildcard_state()
@@ -803,17 +892,19 @@ class BRIEF_CHALLENGE_MATCH(tkinter.Toplevel):
                 ########################################################
                 SWAP(player_data_main,winner-1,loser-1)#ΑΛΛΑΓΗ ΘΕΣΕΩΝ ΠΑΙΚΤΩΝ ΣΤΗΝ ΚΑΤΑΤΑΞΗ ΜΕΣΩ ΤΗΣ ΧΡΗΣΗΣ ΤΗΣ ΚΑΤΑΛΛΗΛΗΣ ΣΥΝΑΡΤΗΣΗΣ
                #########################################################
+                root.print_valid_ch_matches()
+                root.print_ranking()
                 top = CONFIRMED(self)
                 top.grab_set() 
             else:
                 top = FAILED(self)
                 top.grab_set()
-                print('logic')
+                
              
         except:
             top = FAILED(self)
             top.grab_set()
-            print('except')
+            
 
 ###ΚΛΑΣΗ ΥΠΟΜΕΝΟΥ ΔΙΑΧΕΙΡΙΣΗ ΕΚΡΕΜΜΩΝ ΜΑΤΣ ΠΡΟΚΛΗΣΗΣ###
 class OUTSTANDING_CHALLENGE_MATCH(tkinter.Toplevel):
@@ -848,7 +939,8 @@ class OUTSTANDING_CHALLENGE_MATCH(tkinter.Toplevel):
                     del_list(ch_out_matches,heads_ch_out_match,(number-1)) #ΣΒΗNEI ΤΗΝ ΠΡΟΚΛΗΣΗ ΑΠΟ ΤΗΝ ΛΙΣΤΑ
                     
                 ##################################################################
-                   
+                    root.print_out_ch_matches()
+                    root.print_valid_ch_matches()
                     pop_up = CONFIRMED(self)
                     pop_up.grab_set()
                 else:
@@ -865,23 +957,30 @@ class OUTSTANDING_CHALLENGE_MATCH(tkinter.Toplevel):
                 
     ###ΑΡΝΗΣΗ ΕΚΡΕΜΟΥΣ ΜΑΤΣ ΠΡΟΚΛΗΣΗΣ###
     def deny_match(self):
-        try:
+       try:
             number = self.match.get()
-            if(number>=1 and number<=len(ch_out_matches_main+1)):
+            if(number>=1 and number<=len(ch_out_matches_main)+1):
+                
                 del_classes(ch_out_matches_main,number-1) #ΣΒΗΝΕΙ ΤΟ ΑΠΟΡΡΙΦΘΕΝ ΜΑΤΣ ΑΠΟ ΤΗΝ ΛΙΣΤΑ
                 del_list(ch_out_matches,heads_ch_out_match,(number-1))
+                root.print_out_ch_matches()
                 pop_up = CONFIRMED(self)
                 pop_up.grab_set()
             else:
                 pop_up = FAILED(self)
                 pop_up.grab_set()
           
-        except:
+       except:
             pop_up = FAILED(self)
             pop_up.grab_set()
             
    
 ### MAIN###
 if __name__ == '__main__': 
+    STARTUP()
     root = MAIN()
+    root.print_ranking()
+    root.print_valid_ch_matches()
+    root.print_out_ch_matches()
     root.mainloop()   
+    
